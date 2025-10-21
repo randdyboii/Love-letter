@@ -1,12 +1,634 @@
-!doctype html>
 <html> 
- <head> 
-  <style>
-    body {
-      background: linear-gradient(pink,purple);
-    }
-</style> 
- </head> 
+ <head></head> 
  <body> 
+  <meta charset="utf-8"> 
+  <title>Love Letter + Karaoke</title> 
+  <meta name="viewport" content="width=device-width,initial-scale=1"> 
+  <style>    
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&display=swap');    
+    html,body{    
+      height:100%;    
+      margin:0;    
+    }    body {    
+  display: flex;    
+  flex-direction: column;    
+  align-items: center;    
+  justify-content: center;    
+  height: 100vh;    
+  background: linear-gradient(pink, white);    
+  font-family: Arial, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;    
+  margin: 0;    
+  overflow: hidden;    
+}    
+
+/* Floating hearts */    
+.heart {    
+  position: fixed;    
+  top: -10px;    
+  font-size: 48px;    
+  color: rgba(255, 182, 193, 0.6);    
+  animation: fall 7s linear infinite;    
+  z-index: 0;    
+  pointer-events: none;    
+}    
+@keyframes fall {    
+  0% { transform: translateY(0) rotate(0); opacity: 1; }    
+  100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }    
+}    
+
+/* Main content */    
+#content {    
+  display: flex;    
+  flex-direction: column;    
+  align-items: center;    
+  transition: opacity 2s ease;    
+  position: relative;    
+  z-index: 2;    
+  pointer-events: auto;    
+}    
+#content.fade-out { opacity: 0; }    
+
+h2 {    
+  color: red;    
+  font-size: 40px;    
+  margin-bottom: 32px;    
+  text-shadow: 3px 3px 6px white;    
+}    
+
+#myImage {    
+  width: 440px;    
+  max-width: 82vw;    
+  border-radius: 22px;    
+  display: block;    
+}    
+
+button {    
+  padding: 12px 22px;    
+  border: none;    
+  background-color: #ff6699;    
+  color: white;    
+  border-radius: 10px;    
+  cursor: pointer;    
+  font-size: 18px;    
+  transition: background 0.2s, transform 0.12s;    
+  margin-top: 20px;    
+}    
+button:active { transform: translateY(2px); }    
+button:hover { background-color: #cc3366; }    
+
+#overlayText {    
+  position: absolute;    
+  left: 50%;    
+  transform: translateX(-50%);    
+  bottom: 85%;    
+  font-size: 26px;    
+  color: pink;    
+  font-weight: bold;    
+  text-shadow: 3px 3px 6px black;    
+  opacity: 0;    
+  transition: opacity 1s ease;    
+  white-space: nowrap;    
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", 'Dancing Script', cursive;    
+  z-index: 3;    
+  pointer-events: none;    
+}    
+#overlayText.show { opacity: 1; }    
+
+/* Popup box */    
+#popupBox {    
+  display: none;    
+  position: fixed;    
+  left: 50%;    
+  transform: translateX(-50%);    
+  bottom: 22%;    
+  width: min(640px, 92vw);    
+  max-height: 82vh;    
+  height: 440px;    
+  background-color: rgba(255, 240, 220, 0.97);    
+  border-radius: 18px;    
+  box-shadow: 0 0 30px rgba(0,0,0,0.3);    
+  text-align: center;    
+  padding: 22px;    
+  animation: slideUp 1.2s ease forwards;    
+  z-index: 50;    
+  pointer-events: auto;    
+  overflow: auto;    
+}    
+@keyframes slideUp {    
+  0% { transform: translate(-50%,100px); opacity: 0; }    
+  100% { transform: translate(-50%,0); opacity: 1; }    
+}    
+#popupBox img { width: 150px; border-radius: 10px; margin-bottom: 10px; display:block; margin-left:auto; margin-right:auto; }    
+#popupBox p { font-size: 18px; color: #704214; margin: 10px 0; }    
+.choice-buttons { display:flex; justify-content:center; gap:16px; margin-top:12px; }    
+
+/* Scrollable letter boxes */    
+#yesBox, #noBox {    
+  display: none;    
+  position: fixed;    
+  left: 50%;    
+  transform: translateX(-50%);    
+  bottom: 6%;    
+  width: min(760px, 96vw);    
+  height: 80vh;    
+  overflow-y: auto;    
+  background-color: rgba(255,240,220,0.97);    
+  border-radius: 16px;    
+  box-shadow: 0 0 40px rgba(0,0,0,0.35);    
+  padding: 22px 24px;    
+  text-align: left;    
+  z-index: 99999;    
+  animation: slideUp 1.2s ease forwards;    
+  scroll-behavior: smooth;    
+  pointer-events: auto;    
+}    
+
+#yesBox {    
+  background: linear-gradient(to bottom right,#ffe6ef,#fff8f5);    
+  border: 2px solid rgba(255,182,193,0.8);    
+  font-family: 'Dancing Script', cursive;    
+}    
+#yesBox p { font-size: 18px; line-height: 1.5; color:#704214; margin:10px 0; }    
+
+.sparkle { position:absolute; width:7px; height:7px; background:radial-gradient(circle, pink 40%, transparent 40%); border-radius:50%; animation:twinkle 3s infinite ease-in-out; opacity:0.7; }    
+@keyframes twinkle { 0%,100%{opacity:0.1; transform:scale(1);} 50%{opacity:1; transform:scale(1.3);} }    
+
+.gif-space, #scrollGif { width:200px; display:block; margin: 14px auto; border-radius:10px; opacity:0; transition: opacity 1.2s ease; }    
+.gif-space.show, #scrollGif.show { opacity:1; }    
+
+/* Sing-with-me button (inside yesBox) */    
+#singBtn {    
+  display:block;    
+  margin: 16px auto;    
+  background: linear-gradient(90deg,#ff99aa,#ff6699);    
+  border: none;    
+  color: white;    
+  padding: 10px 18px;    
+  font-size: 16px;    
+  border-radius: 12px;    
+  box-shadow: 0 6px 18px rgba(255,153,170,0.25);    
+  cursor: pointer;    
+}    
+
+/* Karaoke Page (full-screen overlay) */    
+#karaokePage {    
+  position: fixed;    
+  top:0; left:0; right:0; bottom:0;    
+  display: none;    
+  align-items: center;    
+  justify-content: center;    
+  background: radial-gradient(circle at top left, #fff3f7,#fffaf6);    
+  z-index: 120;    
+  padding: 16px;    
+  overflow: auto;    
+}    
+#karaokePage.show { display:flex; }    
+
+.karaoke-card {    
+  max-width: 820px;    
+  width: 90%;    
+  background: linear-gradient(180deg, rgba(255,250,245,0.95), rgba(255,245,240,0.95));    
+  border-radius: 16px;    
+  padding: 18px;    
+  box-shadow: 0 0 40px rgba(255, 182, 193, 0.25);    
+  text-align: center;    
+}    
+
+.karaoke-photo {    
+  width: 180px;    
+  height: 180px;    
+  object-fit: cover;    
+  border-radius: 12px;    
+  border: 5px solid rgba(255,215,170,0.6);    
+  margin: 0 auto 10px;    
+}    
+
+#lyrics {    
+  margin-top: 2300px;    
+  font-size: 20px;    
+  font-family: 'Dancing Script', cursive;    
+  color: #8a3b4d;    
+  line-height: 1.5;    
+}    
+#lyrics p { opacity: 0.35; transition: all 0.35s ease; padding:5px 0; }    
+#lyrics p.active { opacity: 1; color: #ff6f97; text-shadow: 0 0 12px rgba(255,180,190,0.9); }    
+
+.small-note { color:#8a5a5a; font-size:13px; margin-top:6px; }    
+
+/* keep interactive elements on top */    
+button, .choice-buttons, #popupBox, #yesBox, #noBox { touch-action: manipulation; }
+
+
+
+
+
+
+/* 💖 Romantic floating image boxes 💖 */
+.fixed-pic {
+  position: fixed;
+  top: 10px;
+  width: 140px;
+  height: 140px;
+  border-radius: 20px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 20px rgba(255, 150, 200, 0.7);
+  animation: floaty 6s ease-in-out infinite;
+  z-index: 9999;
+  border: 4px solid rgba(255, 182, 193, 0.8);
+}
+
+/* 🌸 soft floating animation */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 🌷 left box: pink floral hearts background */
+#fixedPic1 {
+  left: 15px;
+  background-image: url("https://i.imgur.com/DEH9pBG.png"), 
+                    radial-gradient(circle at top left, #ffe6f0, #ffc2d4);
+  background-blend-mode: soft-light;
+}
+
+/* 💐 right box: pastel roses & hearts */
+#fixedPic2 {
+  right: 15px;
+  background-image: url("https://i.imgur.com/6fO9Z5D.png"), 
+                    radial-gradient(circle at top right, #fff0f5, #ffd6e8);
+  background-blend-mode: soft-light;
+}
+
+
+
+
+
+
+
+
+  </style> 
+  <div id="content"> 
+   <h2>😺Press it cutie!😺</h2> 
+   <div id="imageWrapper" style="position:relative;"> 
+    <img id="myImage" src="https://i.imgur.com/j8mgHk1.jpeg" alt="Envelope"> 
+    <div id="overlayText">
+      Happy 11th anniversary my love 🥺💖 
+    </div> 
+   </div> <button id="animateBtn" type="button">Open Letter</button> 
+  </div> <!-- popup --> 
+  <div id="popupBox" role="dialog" aria-modal="true" aria-labelledby="popupTitle" aria-describedby="popupDesc"> 
+   <img src="https://i.imgur.com/VVBQMsK.gif" alt="Cute image"> 
+   <p id="popupDesc">This letter is for my one and only sweet babyy!💕 are you my baby? 🥺</p> 
+   <div class="choice-buttons"> <button id="yesBtn" type="button">Yes 💖</button> <button id="noBtn" type="button">No 😭</button> 
+   </div> 
+  </div> <!-- YES letter --> 
+  <div id="yesBox" aria-live="polite"> 
+   <p>To my lovely forever princess~! 💕</p> 
+   <p><strong>Chea Moniroath.</strong></p> 
+   <p>The time we’ve been together as lovely partners has made me realize that I can actually love a person — especially youu 🥺💕</p> 
+   <img class="gif-space" src="https://i.imgur.com/uQH6FIr.png" alt="cute gif"> 
+   <p>I still remember the first time you asked me if I had ever experienced true love before... and then you said, “Let me show you what it feels like to love 🥹.”</p> 
+   <img class="gif-space" src="https://i.imgur.com/VVBQMsK.gif" alt="cute gif"> 
+   <p>Even when your mom said we shouldn’t be together... you still decided to do it anyway :&lt; not a lot of people would go against their parents for someone they love — and that really touched me deeply 🥺💕</p> 
+   <img class="gif-space" src="https://i.imgur.com/8KV7fK1.png" alt="cute gif"> 
+   <p>Sure, you’re not perfect — but I’d still choose you over and over again. I’d still love you, hear you out, and be here for you 💖</p> 
+   <img id="scrollGif" src="https://i.imgur.com/LrxJZDw.jpeg" alt="cute gif"> 
+   <p><strong>💕 HAPPY 11TH ANNIVERSARY MY LOVELY WIFEY FOREVER 💕🌹</strong></p> <button id="singBtn" type="button">🎤 Celebrate!💖</button> 
+   <div class="small-note">
+     Click the button above to open the karaoke screen and start the song. 
+   </div> 
+  </div> <!-- karaoke --> 
+  <div id="karaokePage" role="dialog" aria-modal="true" aria-hidden="true"> 
+   <div class="karaoke-card"> 
+    <img id="karaokePhoto" class="karaoke-photo" src="https://i.imgur.com/j8mgHk1.jpeg" alt="portrait"> 
+    <h2>💞 Our Song 💞</h2> 
+    <audio id="karaokeAudio" preload="auto" style="display:none;"> 
+     <source src="https://raw.githubusercontent.com/randdyboii/Music/main/Shoti%20-%20LDR_20102025.m4a" type="audio/mpeg"> 
+    </audio> 
+    <div id="lyrics" aria-live="polite"> 
+     <p data-start="8">I don't want love (I don't want love)</p> 
+     <p data-start="12">If love isn't from you (if love isn't from you)</p> 
+     <p data-start="17">I don't want her (I don't want her)</p> 
+     <p data-start="22">If she isn't you (if she isn't you)</p> 
+     <p data-start="27">You're always on my mind, that's how much I care</p> 
+     <p data-start="32">I can't think of a time, that you weren't there</p> 
+     <p data-start="36">I know that I'd be lying if I didn't want you here</p> 
+     <p data-start="42">'Cause, baby, I'm in love, and why can't you just live near?</p> 
+     <p data-start="46">Ngano layo kay ka? Wala ta'y mabuhat</p> 
+     <p data-start="52">Kung diri ka sa akong tupad</p> 
+     <p data-start="55">Adto ta'g cinema, human mangaon ta</p> 
+     <p data-start="59">Kaon bisa'g asa, ika'y pili, ako'y bayad, ako ra'y bahala</p> 
+     <p data-start="75">Ako ra'y bahala</p> 
+     <p data-start="85">Why do you live so far (why do you live so far?)</p> 
+     <p data-start="89">Sayanga kung LDR (sayanga kung LDR)</p> 
+     <p data-start="94">'Cause I know what happens to them</p> 
+     <p data-start="100">They always fall apart</p> 
+     <p data-start="104">But now you've changed my mind (but now you've changed my mind)</p> 
+     <p data-start="108">'Cause you're the girl I want in life (you're the girl I want in life)</p> 
+     <p data-start="113">I want you to have my heart</p> 
+     <p data-start="119">You're mine and I am yours</p> 
+     <p data-start="123">I don't want love (I don't want love)</p> 
+     <p data-start="127">If love isn't from you (if love isn't from you)</p> 
+     <p data-start="133">I don't want her (I don't want her)</p> 
+     <p data-start="137">If she isn't you (if she isn't you)</p> 
+     <p data-start="142">You're always on my mind, that's how much I care</p> 
+     <p data-start="146">I can't think of a time that you weren't there</p> 
+     <p data-start="152">I know that I'd be lying if I didn't want you here</p> 
+     <p data-start="157">'Cause, baby, I'm in love, and why can't you just live near?</p> 
+     <p data-start="161">You're always on my mind, that's how much I care</p> 
+     <p data-start="166">I can't think of a time that you weren't there</p> 
+     <p data-start="171">I know that I'd be lying if I didn't want you here</p> 
+     <p data-start="176">'Cause, baby, I'm in love, and why can't you just live near?</p> 
+     <p data-start="181">But now you've changed my mind</p> 
+     <p data-start="186">'Cause you're the girl I want in life</p> 
+     <p data-start="191">I want you to have my heart</p> 
+     <p data-start="196">You're mine and I am yours 💞</p> <!-- Fixed image boxes (for lyrics section) --> 
+    
+    
+  
+      <div id="fixedPic1" class="fixed-pic"></div>
+      <div id="fixedPic2" class="fixed-pic"></div>
+
+    </div> 
+    <div style="margin-top:12px;"> <button id="closeKaraokeBtn" type="button" style="padding:8px 12px;border-radius:10px;border:none;background:#ff99aa;color:white;cursor:pointer">Close</button> 
+    </div> 
+   </div> 
+   
+  </div> <!-- NO BOX --> 
+  <div id="noBox" style="display:none;"> 
+   <p>NOOOOOO this letter is only for my babyy 🥹🥹💔</p> 
+   <p>please get out whoever this is sir/ma'am.. only she gets to see this! 🥺💖</p> 
+   <img src="https://i.imgur.com/m9TzY7Q.gif" style="width:100%;border-radius:12px;margin-top:12px;"> 
+   <p>get out or choose again &gt;:3 💕</p> 
+  </div> 
+  <script>    
+    // create hearts    
+    function createHeart() {    
+      const heart = document.createElement('div');    
+      heart.className = 'heart';    
+      heart.textContent = '💖';    
+      heart.style.left = Math.random() * 100 + 'vw';    
+      heart.style.animationDuration = (5 + Math.random() * 3) + 's';    
+      document.body.appendChild(heart);    
+      setTimeout(() => heart.remove(), 8000);    
+    }    
+    setInterval(createHeart, 300);    // Insert bounce keyframes dynamically (fixed)    
+const styleSheet = document.createElement('style');    
+styleSheet.textContent = `    
+  @keyframes bounceImg {    
+    0% { transform: translateY(0); }    
+    30% { transform: translateY(-18px); }    
+    60% { transform: translateY(0); }    
+    100% { transform: translateY(0); }    
+  }    
+`;    
+document.head.appendChild(styleSheet);    
+
+// Ensure DOM elements exist before attaching listeners    
+document.addEventListener('DOMContentLoaded', () => {    
+  const content = document.getElementById('content');    
+  const image = document.getElementById('myImage');    
+  const overlayText = document.getElementById('overlayText');    
+  const animateBtn = document.getElementById('animateBtn');    
+  const popupBox = document.getElementById('popupBox');    
+  const yesBtn = document.getElementById('yesBtn');    
+  const noBtn = document.getElementById('noBtn');    
+  const yesBox = document.getElementById('yesBox');    
+  const noBox = document.getElementById('noBox');    
+  const singBtn = document.getElementById('singBtn');    
+  const karaokePage = document.getElementById('karaokePage');    
+  const karaokeAudio = document.getElementById('karaokeAudio');    
+  const lyricsContainer = document.getElementById('lyrics');    
+  const lyricLines = lyricsContainer ? Array.from(lyricsContainer.querySelectorAll('p')) : [];    
+  const closeKaraokeBtn = document.getElementById('closeKaraokeBtn');    
+
+  // Animation trigger    
+  if (animateBtn) {    
+    animateBtn.addEventListener('click', () => {    
+      // small visual bounce trigger    
+      if (image) image.style.animation = 'bounceImg 1s ease';    
+      setTimeout(() => { if (image) image.src = "https://i.imgur.com/zeTTUsm.gif"; }, 50);    
+      setTimeout(() => {    
+        if (image) image.src = "https://i.imgur.com/xeYwzKO.jpeg";    
+        if (overlayText) overlayText.classList.add('show');    
+      }, 5100);    
+      setTimeout(() => { if (content) content.classList.add('fade-out'); }, 8000);    
+      setTimeout(() => {    
+        if (content) content.style.display = 'none';    
+        if (popupBox) popupBox.style.display = 'block';    
+      }, 10000);    
+    });    
+  }    
+
+  // YES button    
+  if (yesBtn) {    
+    yesBtn.addEventListener('click', () => {    
+      if (popupBox) popupBox.style.display = 'none';    
+      // show yesBox and reset scroll    
+      if (yesBox) {    
+        yesBox.style.display = 'block';    
+        yesBox.scrollTop = 0;    
+      }    
+
+      // add sparkles once    
+      if (yesBox && !yesBox.dataset.sparkled) {    
+        for (let i = 0; i < 12; i++) {    
+          const s = document.createElement('div');    
+          s.className = 'sparkle';    
+          s.style.top = (10 + Math.random() * 80) + '%';    
+          s.style.left = (5 + Math.random() * 90) + '%';    
+          s.style.animationDelay = (Math.random() * 2) + 's';    
+          yesBox.appendChild(s);    
+        }    
+        yesBox.dataset.sparkled = '1';    
+      }    
+
+      // fade-in GIFs sequentially    
+      document.querySelectorAll('.gif-space').forEach((g, i) => {    
+        setTimeout(() => g.classList.add('show'), 300 * i);    
+      });    
+    });    
+  }    
+
+  // NO button    
+  if (noBtn) {    
+    noBtn.addEventListener('click', () => {    
+      if (popupBox) popupBox.style.display = 'none';    
+      if (noBox) noBox.style.display = 'block';    
+    });    
+  }    
+
+  // show GIF when scrolled near (for yesBox)    
+  if (yesBox) {    
+    yesBox.addEventListener('scroll', () => {    
+      const scrollGif = document.getElementById('scrollGif');    
+      if (!scrollGif) return;    
+      const rect = scrollGif.getBoundingClientRect();    
+      const half = window.innerHeight / 1.3;    
+      if (rect.top < half && !scrollGif.classList.contains('show')) {    
+        scrollGif.classList.add('show');    
+      }    
+    });    
+  }    
+
+  // SING/CONTINUE: fade yesBox and reveal karaokePage and start hidden audio    
+  if (singBtn) {    
+    singBtn.addEventListener('click', () => {    
+      if (yesBox) {    
+        yesBox.style.transition = 'opacity 1.2s ease';    
+        yesBox.style.opacity = '0';    
+      }    
+      setTimeout(() => {    
+        if (yesBox) { yesBox.style.display = 'none'; yesBox.style.opacity = '1'; } // reset for reuse    
+        if (karaokePage) karaokePage.classList.add('show');    
+        if (karaokePage) karaokePage.setAttribute('aria-hidden', 'false');    
+
+        // Start the hidden audio — this is user-initiated so browsers allow playback    
+        if (karaokeAudio) {    
+          karaokeAudio.currentTime = 0;    
+          karaokeAudio.volume = 1;    
+          karaokeAudio.play().catch(err => {    
+            console.warn('Audio blocked:', err);    
+            alert('If audio did not start automatically, please press Play on your device or unmute it. ❤️');    
+          });    
+        }    
+      }, 1200);    
+    });    
+  }    
+
+  // Lyrics sync logic    
+  function updateLyrics() {    
+    if (!karaokeAudio || lyricLines.length === 0) return;    
+    const t = karaokeAudio.currentTime;    
+    let activeIndex = -1;    
+    for (let i = 0; i < lyricLines.length; i++) {    
+      const start = parseFloat(lyricLines[i].dataset.start || 0);    
+      if (t + 0.25 >= start) activeIndex = i;    
+    }    
+    lyricLines.forEach((line, i) => {    
+      line.classList.toggle('active', i === activeIndex);    
+    });    
+    if (activeIndex >= 0) {    
+      lyricLines[activeIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });    
+    }    
+  }    
+  if (karaokeAudio) karaokeAudio.addEventListener('timeupdate', updateLyrics);    
+
+  // Close karaoke    
+  if (closeKaraokeBtn) {    
+    closeKaraokeBtn.addEventListener('click', () => {    
+      if (karaokeAudio) karaokeAudio.pause();    
+      if (karaokePage) karaokePage.classList.remove('show');    
+      if (karaokePage) karaokePage.setAttribute('aria-hidden', 'true');    
+      if (yesBox) { yesBox.style.display = 'block'; yesBox.style.opacity = '1'; yesBox.scrollTop = yesBox.scrollHeight; }    
+    });    
+  }    
+
+  // Keyboard accessibility    
+  [animateBtn, singBtn, yesBtn, noBtn].forEach(el => {    
+    if (!el) return;    
+    el.addEventListener('keydown', (e) => {    
+      if (e.key === 'Enter') el.click();    
+    });    
+  });    
+}); // end of DOMContentLoaded
+// show GIF when scrolled near (for yesBox) + trigger exploding hearts
+if (yesBox) {
+  yesBox.addEventListener('scroll', () => {
+    const scrollGif = document.getElementById('scrollGif');
+    if (!scrollGif) return;
+    const rect = scrollGif.getBoundingClientRect();
+    const half = window.innerHeight / 1.3;
+
+    if (rect.top < half && !scrollGif.classList.contains('show')) {
+      scrollGif.classList.add('show');
+
+      // 🎆 Trigger exploding hearts once when last image shows
+      triggerExplodingHearts();
+    }
+  });
+}
+
+// 💖 Exploding heart fireworks effect
+function triggerExplodingHearts() {
+  const total = 40; // number of hearts
+  for (let i = 0; i < total; i++) {
+    const heart = document.createElement('div');
+    heart.textContent = '💖';
+    heart.style.position = 'fixed';
+    heart.style.left = '45%';
+    heart.style.top = '40%';
+    heart.style.fontSize = `${24 + Math.random() * 30}px`;
+    heart.style.opacity = 1;
+    heart.style.transition = 'transform 1.8s ease-out, opacity 2s ease-out';
+    heart.style.zIndex = 999999;
+
+    document.body.appendChild(heart);
+
+    const angle = Math.random() * 2 * Math.PI;
+    const distance = 180 + Math.random() * 180;
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance;
+
+    requestAnimationFrame(() => {
+      heart.style.transform = `translate(${x}px, ${y}px) scale(${0.8 + Math.random() * 1.2})`;
+      heart.style.opacity = 0;
+    });
+
+    setTimeout(() => heart.remove(), 2000);
+  }
+}
+
+
+
+
+
+// Fixed image boxes logic for karaoke
+document.addEventListener('DOMContentLoaded', () => {
+  const pic1 = document.getElementById('fixedPic1');
+  const pic2 = document.getElementById('fixedPic2');
+
+  // You can set your image URLs here:
+  const imageURL1 = "https://i.imgur.com/kfTk3Xq.jpeg"; // replace with your own
+  const imageURL2 = "https://i.imgur.com/Z9xSYoL.png";  // replace with your own
+
+  if (pic1) pic1.style.backgroundImage = `url('${imageURL1}')`;
+  if (pic2) pic2.style.backgroundImage = `url('${imageURL2}')`;
+
+  // Hide boxes when karaoke page is closed
+  const karaokePage = document.getElementById('karaokePage');
+  const closeKaraokeBtn = document.getElementById('closeKaraokeBtn');
+  if (closeKaraokeBtn) {
+    closeKaraokeBtn.addEventListener('click', () => {
+      pic1.style.opacity = '0';
+      pic2.style.opacity = '0';
+      setTimeout(() => {
+        pic1.style.display = 'none';
+        pic2.style.display = 'none';
+      }, 400);
+    });
+  }
+
+  // Show when karaoke starts
+  const singBtn = document.getElementById('singBtn');
+  if (singBtn) {
+    singBtn.addEventListener('click', () => {
+      pic1.style.display = 'block';
+      pic2.style.display = 'block';
+      requestAnimationFrame(() => {
+        pic1.style.opacity = '1';
+        pic2.style.opacity = '1';
+      });
+    });
+  }
+});
+
+
+
+
+
+
+</script> 
  </body>
 </html>
